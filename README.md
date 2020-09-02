@@ -38,11 +38,12 @@ run spdump.py as follows:
 
 spdump.py
 
-(5, None, 1.0, 3, u'http://www.dr-chuck.com/csev-blog')
-(3, None, 1.0, 4, u'http://www.dr-chuck.com/dr-chuck/resume/speaking.htm')
-(1, None, 1.0, 2, u'http://www.dr-chuck.com/csev-blog/')
-(1, None, 1.0, 5, u'http://www.dr-chuck.com/dr-chuck/resume/index.htm')
-4 rows.
+(352, 13.965677009585145, 13.796689370187737, 1, 'https://timesofindia.indiatimes.com')
+(190, 7.534892228627917, 6.979403454996037, 293, 'https://timesofindia.indiatimes.com/entertainment/latest-new-movies/hindi-movies')
+(169, 7.943160468934033, 8.248922043159736, 2, 'https://timesofindia.indiatimes.com/rss.cms')
+(70, 6.722738089304296, 7.012401129969752, 592, 'https://timesofindia.indiatimes.com/newsletterhome.cms')
+(67, 5.335018299718141, 4.86370182006613, 765, 'https://timesofindia.indiatimes.com/entertainment/hindi/movie-details/nikamma/movieshow/70326484.cms')
+128 rows.
 
 This shows the number of incoming links, the old page rank, the new page
 rank, the id of the page, and the url of the page.  The spdump.py program
