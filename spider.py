@@ -48,14 +48,15 @@ webs = list()
 for row in cur:
     webs.append(str(row[0]))
 
+print("Current Website is:")
 print(webs)
 
 many = 0
 while True:
     if ( many < 1 ) :
-        sval = input('How many pages:')
-        if ( len(sval) < 1 ) : break
-        many = int(sval)
+        sval = int(input('How many pages:'))
+        if ( sval < 1 ) : break
+        many = sval
     many = many - 1
 
     cur.execute('SELECT id,url FROM Pages WHERE html is NULL and error is NULL ORDER BY RANDOM() LIMIT 1')
@@ -77,10 +78,12 @@ while True:
         document = urlopen(url, context=ctx)
 
         html = document.read()
+        #Check for good error
         if document.getcode() != 200 :
             print("Error on page: ",document.getcode())
             cur.execute('UPDATE Pages SET error=? WHERE url=?', (document.getcode(), url) )
-
+        
+        #Only parser html or text pages
         if 'text/html' != document.info().get_content_type() :
             print("Ignore non text/html page")
             cur.execute('DELETE FROM Pages WHERE url=?', ( url, ) )
@@ -89,6 +92,7 @@ while True:
 
         print('('+str(len(html))+')', end=' ')
 
+        #start parser
         soup = BeautifulSoup(html, "html.parser")
     except KeyboardInterrupt:
         print('')
@@ -100,6 +104,7 @@ while True:
         conn.commit()
         continue
 
+    #initilize the newwebpage with url and add it to pages
     cur.execute('INSERT OR IGNORE INTO Pages (url, html, new_rank) VALUES ( ?, NULL, 1.0 )', ( url, ) )
     cur.execute('UPDATE Pages SET html=? WHERE url=?', (memoryview(html), url ) )
     conn.commit()
@@ -111,17 +116,19 @@ while True:
         href = tag.get('href', None)
         if ( href is None ) : continue
         # Resolve relative references like href="/contact"
-        up = urlparse(href)
+        up = urlparse(href) #used to break url into parts
         if ( len(up.scheme) < 1 ) :
             href = urljoin(url, href)
         ipos = href.find('#')
         if ( ipos > 1 ) : href = href[:ipos]
+        #if its png or jpg or gif we ignore
         if ( href.endswith('.png') or href.endswith('.jpg') or href.endswith('.gif') ) : continue
         if ( href.endswith('/') ) : href = href[:-1]
         # print href
         if ( len(href) < 1 ) : continue
 
 		# Check if the URL is in any of the webs
+        #if any links that leaves the website we want, we dont consider that links. We skip it here!
         found = False
         for web in webs:
             if ( href.startswith(web) ) :
@@ -129,10 +136,12 @@ while True:
                 break
         if not found : continue
 
+        #insert the new page into Pages 
         cur.execute('INSERT OR IGNORE INTO Pages (url, html, new_rank) VALUES ( ?, NULL, 1.0 )', ( href, ) )
         count = count + 1
         conn.commit()
 
+        # add this new page to links and link its from_id and to_id
         cur.execute('SELECT id FROM Pages WHERE url=? LIMIT 1', ( href, ))
         try:
             row = cur.fetchone()
