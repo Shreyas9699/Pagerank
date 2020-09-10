@@ -18,12 +18,17 @@ for row in cur:
     from_id = row[0]
     to_id = row[1]
     if from_id == to_id : continue
-    if from_id not in from_ids : continue
-    if to_id not in from_ids : continue
+    #the urls that are not in links are skipped
+    if from_id not in from_ids : continue 
+    #to_id that points to nowhere/not yet retrives yet are skipped
+    if to_id not in from_ids : continue 
+    #links that are already retrives and have a valid from_id and to_id are selected
     links.append(row)
+    #list of to_id's
     if to_id not in to_ids : to_ids.append(to_id)
 
 # Get latest page ranks for strongly connected component
+# Get dictionary of all from_id's with their latest page rank from Pages table i.e mapping id to its rank
 prev_ranks = dict()
 for node in from_ids:
     cur.execute('''SELECT new_rank FROM Pages WHERE id = ?''', (node, ))
@@ -42,6 +47,7 @@ if len(prev_ranks) < 1 :
 # Lets do Page Rank in memory so it is really fast
 for i in range(many):
     # print prev_ranks.items()[:5]
+    # create new dict for next_ranks
     next_ranks = dict()
     total = 0.0
     for (node, old_rank) in list(prev_ranks.items()):
@@ -58,17 +64,24 @@ for i in range(many):
            #  print '   ',from_id,to_id
 
             if to_id not in to_ids: continue
+            # inbound link from node to to_id, so consider that in bound link and accumulate that inbound link
             give_ids.append(to_id)
         if ( len(give_ids) < 1 ) : continue
+        # calculate ranks
         amount = old_rank / len(give_ids)
         # print node, old_rank,amount, give_ids
     
+        # assign calculated ranks to all the pages that are
         for id in give_ids:
             next_ranks[id] = next_ranks[id] + amount
     
+    # Now calculate new total PageRank
     newtot = 0
     for (node, next_rank) in list(next_ranks.items()):
         newtot = newtot + next_rank
+    # There are dysfunctional shapes in which PageRank can be trapped.
+    # This EVAP is taking a fraction away from everyone and giving it back to everybody else
+    # Evaporation has somethinf to do with PageRank not +sure.
     evap = (total - newtot) / len(next_ranks)
 
     # print newtot, evap
@@ -81,6 +94,7 @@ for i in range(many):
 
     # Compute the per-page average change from old rank to new rank
     # As indication of convergence of the algorithm
+    # shows the stability of the PageRank algo
     totdiff = 0
     for (node, old_rank) in list(prev_ranks.items()):
         new_rank = next_ranks[node]
